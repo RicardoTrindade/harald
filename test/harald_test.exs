@@ -116,10 +116,19 @@ defmodule HaraldTest do
       data: decoded_l2cap_data
     }
 
+    <<h1::size(4), h2::size(4), h3::size(4)>> = handle
+    flags = <<encoded_broadcast_flag::size(2), encoded_packet_boundary_flag::size(2)>>
+
+    handle_and_flags = <<
+      h1::size(4),
+      h3::size(4),
+      flags::bits-size(4),
+      h2::size(4)
+    >>
+
     encoded_acl_data = <<
-      handle::bits-size(12),
-      encoded_packet_boundary_flag::size(2),
-      encoded_broadcast_flag::size(2),
+      2,
+      handle_and_flags::binary-little-size(2),
       data_total_length::little-size(16),
       encoded_l2cap_data::binary
     >>
@@ -174,11 +183,19 @@ defmodule HaraldTest do
       data: decoded_l2cap_data
     }
 
+    <<h1::size(4), h2::size(4), h3::size(4)>> = handle
+    flags = <<encoded_broadcast_flag::size(2), encoded_packet_boundary_flag::size(2)>>
+
+    handle_and_flags = <<
+      h1::size(4),
+      h3::size(4),
+      flags::bits-size(4),
+      h2::size(4)
+    >>
+
     encoded_acl_data = <<
       hci_packet_type::size(8),
-      handle::bits-size(12),
-      encoded_packet_boundary_flag::size(2),
-      encoded_broadcast_flag::size(2),
+      handle_and_flags::binary-little-size(2),
       data_total_length::little-size(16),
       encoded_l2cap_data::binary
     >>

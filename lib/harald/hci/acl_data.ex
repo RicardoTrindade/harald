@@ -24,13 +24,22 @@ defmodule Harald.HCI.ACLData do
 
   def decode(
         <<
-          handle::bits-size(12),
-          pb_flag::size(2),
-          bc_flag::size(2),
+          2,
+          handle_and_flags::binary-little-size(2),
           data_total_length::little-size(16),
-          data::binary-size(data_total_length)
+          data::binary
         >> = encoded_bin
       ) do
+    <<
+      h1::size(4),
+      h3::size(4),
+      flags::bits-size(4),
+      h2::size(4)
+    >> = handle_and_flags
+
+    handle = <<h1::size(4), h2::size(4), h3::size(4)>>
+    <<bc_flag::size(2), pb_flag::size(2)>> = flags
+
     with {:ok, decoded_data} <- L2CAP.decode(data) do
       decoded = %__MODULE__{
         handle: handle,
@@ -54,16 +63,24 @@ defmodule Harald.HCI.ACLData do
         data_total_length: data_total_length,
         data: data
       }) do
-    indicator = Packet.indicator(:acl_data)
     encoded_pb_flag = encode_pb_flag!(pb_flag)
     encoded_bc_flag = encode_bc_flag!(bc_flag)
     {:ok, encoded_data} = L2CAP.encode(data)
+    <<h1::size(4), h2::size(4), h3::size(4)>> = handle
+    flags = <<encoded_bc_flag::size(2), encoded_pb_flag::size(2)>>
+
+    handle_and_flags = <<
+      h1::size(4),
+      h3::size(4),
+      flags::bits-size(4),
+      h2::size(4)
+    >>
+
+    indicator = Packet.indicator(:acl_data)
 
     encoded = <<
       indicator,
-      handle::bits-size(12),
-      encoded_pb_flag::size(2),
-      encoded_bc_flag::size(2),
+      handle_and_flags::binary-little-size(2),
       data_total_length::little-size(16),
       encoded_data::binary
     >>
